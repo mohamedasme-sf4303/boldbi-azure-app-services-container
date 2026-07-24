@@ -1,0 +1,222 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServiceName": {
+      "type": "string",
+      "maxLength": 24,
+      "minLength": 3
+    },
+    "storageAccountName": {
+      "type": "string",
+      "maxLength": 24,
+      "minLength": 3,
+      "defaultValue": "boldbistorage"
+    },
+    "imageName": {
+      "type": "string",
+      "defaultValue": "us-central1-docker.pkg.dev/boldbi-dev-296107/boldbi/boldbi-docker:16.1.90_07142026_085820_Debian"
+    },
+    "artifactRegistryUrl": {
+      "type": "string",
+      "defaultValue": "https://us-central1-docker.pkg.dev"
+    },
+    "artifactRegistryUsername": {
+      "type": "string",
+      "defaultValue": "_json_key"
+    },
+    "artifactRegistryPassword": {
+      "type": "secureString"
+    },
+    "protocol": {
+      "type": "string",
+      "defaultValue": "https",
+      "allowedValues": [
+        "http",
+        "https"
+      ]
+    },
+    "appServicePlanSize": {
+      "type": "string",
+      "defaultValue": "P1V3_2Core_8GB_DEV",
+      "allowedValues": [
+        "P1V3_2Core_8GB_DEV",
+        "P2V3_4Core_16GB_PROD",
+        "P3V3_8Core_32GB_PROD"
+      ]
+    }
+  },
+  "variables": {
+    "planName": "[concat(parameters('appServiceName'), '-plan')]",
+    "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
+    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
+    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
+    "planSkuMap": {
+      "P1V3_2Core_8GB_DEV": "P1v3",
+      "P2V3_4Core_16GB_PROD": "P2v3",
+      "P3V3_8Core_32GB_PROD": "P3v3"
+    },
+    "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
+    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('workspaceName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-12-01",
+      "name": "[variables('planName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "linux",
+      "sku": {
+        "name": "[variables('skuName')]",
+        "tier": "PremiumV3",
+        "capacity": 1
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('appServiceName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "app,linux,container",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
+        "httpsOnly": "[variables('httpsOnly')]",
+        "siteConfig": {
+          "linuxFxVersion": "[variables('dockerImage')]",
+          "alwaysOn": true,
+          "healthCheckPath": "/api/status",
+          "healthCheckEvictionTimeInMin": 2,
+          "appSettings": [
+            {
+              "name": "DOCKER_REGISTRY_SERVER_URL",
+              "value": "[parameters('artifactRegistryUrl')]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+              "value": "[parameters('artifactRegistryUsername')]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+              "value": "[parameters('artifactRegistryPassword')]"
+            },
+            {
+              "name": "AZURE_APP_SERVICES_HTTPS",
+              "value": "[variables('azureAppServicesHttps')]"
+            },
+            {
+              "name": "APP_URL",
+              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+            },
+            {
+              "name": "WEBSITES_PORT",
+              "value": "80"
+            },
+            {
+              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+              "value": "true"
+            },
+            {
+              "name": "BOLD_SERVICES_AZUREBLOB_ACCESSKEY",
+              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]"
+            },
+            {
+              "name": "BOLD_SERVICES_AZUREBLOB_ACCOUNT_NAME",
+              "value": "[parameters('storageAccountName')]"
+            },
+            {
+              "name": "BOLD_SERVICES_AZUREBLOB_CONNECTION_TYPE",
+              "value": "https"
+            },
+            {
+              "name": "BOLD_SERVICES_AZUREBLOB_STORAGE_URI",
+              "value": "[concat(parameters('storageAccountName'), '.blob.core.windows.net')]"
+            },
+            {
+              "name": "BOLD_SERVICES_STORAGETYPE",
+              "value": "1"
+            },
+            {
+              "name": "BOLD_SERVICES_AZUREBLOB_CONTAINER_NAME",
+              "value": "bold-services"
+            },
+            {
+              "name": "BOLD_SERVICES_CONSOLE_LOG_ENABLED",
+              "value": "true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "name": "appservice-diagnostics",
+      "scope": "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+      ],
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]",
+        "logs": [
+          {
+            "category": "AppServiceConsoleLogs",
+            "enabled": true
+          },
+          {
+            "category": "AppServiceHTTPLogs",
+            "enabled": true
+          },
+          {
+            "category": "AppServiceAppLogs",
+            "enabled": true
+          },
+          {
+            "category": "AppServicePlatformLogs",
+            "enabled": true
+          },
+          {
+            "category": "AppServiceAuditLogs",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}
