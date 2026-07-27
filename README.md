@@ -375,6 +375,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
 ```
 
 </details>
+
 ---
 
 ### Step 4: Fill in Deployment Details
