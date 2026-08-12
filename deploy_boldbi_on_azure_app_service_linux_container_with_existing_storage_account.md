@@ -82,7 +82,7 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
     },
     "imageName": {
       "type": "string",
-      "defaultValue": "asme123/boldbi:azure_app_services_images4"
+      "defaultValue": "asme123/boldbi:azure_app_services_images6"
     },
     "protocol": {
       "type": "string",
