@@ -342,14 +342,13 @@ Provide the following parameters:
 | **Protocol** | Choose the protocol used to host Bold BI. <br>• Select `http` if you want to host Bold BI over **HTTP** (e.g., `http://<appname>.azurewebsites.net`). <br>• Select `https` if you want to host Bold BI over **HTTPS** (e.g., `https://<appname>.azurewebsites.net`). <br>Make sure the protocol you select here matches how you will access the application later. |
 | **Image Name** | The Bold BI Docker image to deploy. <br>• **Default value:** `asme123/boldbi:azure_app_services_images4` <br>• If you have a different Bold BI image, update this value. <br>Example format: `<repository>/<image>:<tag>`. |
 
-  ![mandatory](./images/mandatory_value.png)
+  ![mandatory](./images/mandatory_value_old_sa.png)
 
 ---
 
 ### Step 5: Review and Create
 
 1. After all details are filled in, click **Review + Create**.
-  ![review_and_save](./images/review_create.png)
 
 2. Wait for validation to complete.
 
