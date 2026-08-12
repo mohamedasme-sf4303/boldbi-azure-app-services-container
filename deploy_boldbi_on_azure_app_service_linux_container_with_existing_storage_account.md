@@ -395,6 +395,6 @@ Provide the following parameters:
 3. If you are redirected to the Bold BI login page, sign in using your Bold BI username and password.
 
 4. After accessing the **Proxy Settings** page, update the **Site URL** or **Proxy URL** field with your new domain URL.
-
+   ![proxy_settings](./images/proxy_settings.png)
 ---
 
