@@ -250,10 +250,6 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
               "value": "80"
             },
             {
-              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-              "value": "true"
-            },
-            {
               "name": "BOLD_SERVICES_AZUREBLOB_ACCESSKEY",
               "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]"
             },
