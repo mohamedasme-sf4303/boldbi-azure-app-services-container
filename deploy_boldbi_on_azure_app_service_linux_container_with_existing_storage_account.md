@@ -99,7 +99,7 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "DOCKER|asme123/boldbi:16.2.5_new1"
+    "dockerImage": "DOCKER|asme123/boldbi:16.2.5_new1",
     "blobStorageUri": "[concat(parameters('storageAccountName'), '.blob.core.windows.net')]"
   },
   "resources": [
