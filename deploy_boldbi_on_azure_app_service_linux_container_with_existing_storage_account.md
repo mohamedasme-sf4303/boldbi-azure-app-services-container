@@ -80,18 +80,6 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
         "description": "Existing blob container name in the storage account."
       }
     },
-    "imageName": {
-      "type": "string",
-      "defaultValue": "asme123/boldbi:azure_app_services_images6"
-    },
-    "protocol": {
-      "type": "string",
-      "defaultValue": "https",
-      "allowedValues": [
-        "http",
-        "https"
-      ]
-    },
     "appServicePlanSize": {
       "type": "string",
       "defaultValue": "P1V3_2Core_8GB_DEV",
@@ -105,15 +93,13 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
   "variables": {
     "planName": "[concat(parameters('appServiceName'), '-plan')]",
     "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
-    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
-    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
     "planSkuMap": {
       "P1V3_2Core_8GB_DEV": "P1v3",
       "P2V3_4Core_16GB_PROD": "P2v3",
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]",
+    "dockerImage": "DOCKER|asme123/boldbi:16.2.5_new1"
     "blobStorageUri": "[concat(parameters('storageAccountName'), '.blob.core.windows.net')]"
   },
   "resources": [
@@ -155,7 +141,7 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "httpsOnly": "[variables('httpsOnly')]",
+        "httpsOnly": "true",
         "siteConfig": {
           "linuxFxVersion": "[variables('dockerImage')]",
           "alwaysOn": true,
@@ -164,19 +150,15 @@ This guide explains how to deploy **Bold BI** on **Azure App Services (Linux con
           "appSettings": [
             {
               "name": "AZURE_APP_SERVICES_HTTPS",
-              "value": "[variables('azureAppServicesHttps')]"
+              "value": "true"
             },
             {
               "name": "APP_URL",
-              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+              "value": "[concat('https://', parameters('appServiceName'), '.azurewebsites.net')]"
             },
             {
               "name": "WEBSITES_PORT",
               "value": "80"
-            },
-            {
-              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-              "value": "true"
             },
             {
               "name": "BOLD_SERVICES_AZUREBLOB_ACCESSKEY",
@@ -339,8 +321,6 @@ Provide the following parameters:
 | **Storage Account Name** | The name of the **existing** storage account that was previously used with the Windows-based App Service. |
 | **Storage Account Access Key** | The **access key** of the existing storage account. Find it under the storage account → *Security + networking* → *Access keys*. |
 | **Azure Blob Container Name** | The name of the **existing** blob container in the storage account (for example, `bold-services`). |
-| **Protocol** | Choose the protocol used to host Bold BI. <br>• Select `http` if you want to host Bold BI over **HTTP** (e.g., `http://<appname>.azurewebsites.net`). <br>• Select `https` if you want to host Bold BI over **HTTPS** (e.g., `https://<appname>.azurewebsites.net`). <br>Make sure the protocol you select here matches how you will access the application later. |
-| **Image Name** | The Bold BI Docker image to deploy. <br>• **Default value:** `asme123/boldbi:azure_app_services_images4` <br>• If you have a different Bold BI image, update this value. <br>Example format: `<repository>/<image>:<tag>`. |
 
   ![mandatory](./images/mandatory_value_old_sa.png)
 
@@ -381,16 +361,6 @@ Provide the following parameters:
    ![health_check](./images/default_domain.png)
 
 2. Open a browser and navigate to the following URL by appending `/ums/administration/proxy-settings` to the **Default Domain**:
-
-   > **Note:**
-   >
-   > - If you selected **HTTP**, access:
-   >   `http://<Default-Domain>/ums/administration/proxy-settings`
-   >
-   > - If you selected **HTTPS**, access:
-   >   `https://<Default-Domain>/ums/administration/proxy-settings`
-   >
-   > Wait for the page to load completely before proceeding.
 
 3. If you are redirected to the Bold BI login page, sign in using your Bold BI username and password.
 
