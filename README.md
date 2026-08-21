@@ -451,13 +451,6 @@ Provide the following parameters:
   ![default_domain](./images/default_domain.png)
 
 2. Paste the URL into your browser.
-
-> **Note:**
-> - If you chose **HTTP**, access the site via `http://<Default Domain>`.
-> - If you chose **HTTPS**, access the site via `https://<Default Domain>`.
->
-> Wait for some time for it to load completely before proceeding.
-
 ---
 
 ### Step 9: Start the Bold BI Application
