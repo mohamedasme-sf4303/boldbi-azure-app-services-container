@@ -374,8 +374,6 @@ Provide the following parameters:
 | **App Service Name** | Enter a unique name for the Bold BI App URL (3–24 characters, lowercase letters and numbers only). If taken, the deployment fails — choose another. |
 | **App Service Plan Size** | Select the App Service SKU. Available values: <br>• `P1V3_2Core_8GB_DEV` <br>• `P2V3_4Core_16GB_PROD` <br>• `P3V3_8Core_32GB_PROD` |
 | **Storage Account Name** | Unique name (3–24 characters, lowercase letters and numbers only) for Blob storage. |
-| **Protocol** | Choose the protocol used to host Bold BI. <br>• Select `http` if you want to host Bold BI over **HTTP** (e.g., `http://<appname>.azurewebsites.net`). <br>• Select `https` if you want to host Bold BI over **HTTPS** (e.g., `https://<appname>.azurewebsites.net`). <br> Make sure the protocol you select here matches how you will access the application later. |
-| **Image Name** | The Bold BI Docker image to deploy. <br>• **Default value:** `asme123/boldbi:azure_app_services_images4` <br>• If you have any other Bold BI image, update this value here. <br> Example format: `<repository>/<image>:<tag>`. |
 
   ![mandatory](./images/mandatory_value.png)
 
