@@ -67,18 +67,6 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
       "minLength": 3,
       "defaultValue": "boldbistorage"
     },
-    "imageName": {
-      "type": "string",
-      "defaultValue": "asme123/boldbi:azure_app_services_images4"
-    },
-    "protocol": {
-      "type": "string",
-      "defaultValue": "https",
-      "allowedValues": [
-        "http",
-        "https"
-      ]
-    },
     "appServicePlanSize": {
       "type": "string",
       "defaultValue": "P1V3_2Core_8GB_DEV",
@@ -169,15 +157,13 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
   "variables": {
     "planName": "[concat(parameters('appServiceName'), '-plan')]",
     "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
-    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
-    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
     "planSkuMap": {
       "P1V3_2Core_8GB_DEV": "P1v3",
       "P2V3_4Core_16GB_PROD": "P2v3",
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]"
+    "dockerImage": "DOCKER|asme123/boldbi:16.2.5_new1"
   },
   "resources": [
     {
@@ -230,7 +216,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "httpsOnly": "[variables('httpsOnly')]",
+        "httpsOnly": "true",
         "siteConfig": {
           "linuxFxVersion": "[variables('dockerImage')]",
           "alwaysOn": true,
@@ -239,11 +225,11 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
           "appSettings": [
             {
               "name": "AZURE_APP_SERVICES_HTTPS",
-              "value": "[variables('azureAppServicesHttps')]"
+              "value": "true"
             },
             {
               "name": "APP_URL",
-              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+              "value": "[concat('https://', parameters('appServiceName'), '.azurewebsites.net')]"
             },
             {
               "name": "WEBSITES_PORT",
