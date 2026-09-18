@@ -1,4 +1,4 @@
-  {
+{
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -9,21 +9,21 @@
     },
     "storageAccountName": {
       "type": "string",
-      "maxLength": 24,
-      "minLength": 3,
-      "defaultValue": "boldbistorage"
+      "metadata": {
+        "description": "Existing storage account name (reused from the previous Windows-based App Service)."
+      }
     },
-    "imageName": {
-      "type": "string",
-      "defaultValue": "asme123/boldbi:azure_app_services_images4"
+    "storageAccountAccessKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Existing storage account access key. Stored as the BOLD_SERVICES_AZUREBLOB_ACCESSKEY app setting."
+      }
     },
-    "protocol": {
+    "blobContainerName": {
       "type": "string",
-      "defaultValue": "https",
-      "allowedValues": [
-        "http",
-        "https"
-      ]
+      "metadata": {
+        "description": "Existing blob container name in the storage account."
+      }
     },
     "appServicePlanSize": {
       "type": "string",
@@ -38,28 +38,16 @@
   "variables": {
     "planName": "[concat(parameters('appServiceName'), '-plan')]",
     "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
-    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
-    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
     "planSkuMap": {
       "P1V3_2Core_8GB_DEV": "P1v3",
       "P2V3_4Core_16GB_PROD": "P2v3",
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]"
+    "dockerImage": "DOCKER|syncfusion/boldbi:latest",
+    "blobStorageUri": "[concat(parameters('storageAccountName'), '.blob.core.windows.net')]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2023-01-01",
-      "name": "[parameters('storageAccountName')]",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "StorageV2",
-      "properties": {}
-    },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2023-09-01",
@@ -94,37 +82,32 @@
       "location": "[resourceGroup().location]",
       "kind": "app,linux,container",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]"
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "httpsOnly": "[variables('httpsOnly')]",
+        "httpsOnly": "true",
         "siteConfig": {
           "linuxFxVersion": "[variables('dockerImage')]",
           "alwaysOn": true,
           "healthCheckPath": "/api/status",
-		  "healthCheckEvictionTimeInMin": 2,
+          "healthCheckEvictionTimeInMin": 2,
           "appSettings": [
             {
-              "name": "AZURE_APP_SERVICES_HTTPS",
-              "value": "[variables('azureAppServicesHttps')]"
+              "name": "BOLD_SERVICES_REVERSE_PROXY",
+              "value": "true"
             },
             {
               "name": "APP_URL",
-              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+              "value": "[concat('https://', parameters('appServiceName'), '.azurewebsites.net')]"
             },
             {
               "name": "WEBSITES_PORT",
               "value": "80"
             },
             {
-              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-              "value": "true"
-            },
-            {
               "name": "BOLD_SERVICES_AZUREBLOB_ACCESSKEY",
-              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]"
+              "value": "[parameters('storageAccountAccessKey')]"
             },
             {
               "name": "BOLD_SERVICES_AZUREBLOB_ACCOUNT_NAME",
@@ -136,7 +119,7 @@
             },
             {
               "name": "BOLD_SERVICES_AZUREBLOB_STORAGE_URI",
-              "value": "[concat(parameters('storageAccountName'), '.blob.core.windows.net')]"
+              "value": "[variables('blobStorageUri')]"
             },
             {
               "name": "BOLD_SERVICES_STORAGETYPE",
@@ -144,11 +127,75 @@
             },
             {
               "name": "BOLD_SERVICES_AZUREBLOB_CONTAINER_NAME",
-              "value": "bold-services"
+              "value": "[parameters('blobContainerName')]"
             },
             {
               "name": "BOLD_SERVICES_CONSOLE_LOG_ENABLED",
               "value": "true"
+            },
+            {
+              "name": "ID_WEB_SERVICE_URL",
+              "value": "http://localhost:6500"
+            },
+            {
+              "name": "ID_API_SERVICE_URL",
+              "value": "http://localhost:6501/api"
+            },
+            {
+              "name": "ID_UMS_SERVICE_URL",
+              "value": "http://localhost:6502/ums"
+            },
+            {
+              "name": "BI_WEB_SERVICE_URL",
+              "value": "http://localhost:6504/bi"
+            },
+            {
+              "name": "BI_API_SERVICE_URL",
+              "value": "http://localhost:6505/bi/api"
+            },
+            {
+              "name": "BI_JOBS_SERVICE_URL",
+              "value": "http://localhost:6506/bi/jobs"
+            },
+            {
+              "name": "BI_DESIGNER_SERVICE_URL",
+              "value": "http://localhost:6507/bi/designer"
+            },
+            {
+              "name": "BI_DESIGNER_HELPER_SERVICE_URL",
+              "value": "http://localhost:6507/bi/designer/helper"
+            },
+            {
+              "name": "BOLD_ETL_SERVICE_URL",
+              "value": "http://localhost:6509"
+            },
+            {
+              "name": "BOLD_ETL_BLAZOR_SERVICE_URL",
+              "value": "http://localhost:6509/framework/blazor.server.js"
+            },
+            {
+              "name": "BOLD_AI_SERVICE_URL",
+              "value": "http://localhost:6510/aiservice"
+            },
+            {
+              "name": "REPORTS_WEB_SERVICE_URL",
+              "value": "http://localhost:6504/reporting"
+            },
+            {
+              "name": "REPORTS_API_SERVICE_URL",
+              "value": "http://localhost:6505/reporting/api"
+            },
+            {
+              "name": "REPORTS_JOBS_SERVICE_URL",
+              "value": "http://localhost:6506/reporting/jobs"
+            },
+            {
+              "name": "REPORTS_DESIGNER_SERVICE_URL",
+              "value": "http://localhost:6508/reporting/reportservice"
+            },
+            {
+              "name": "REPORTS_VIEWER_SERVICE_URL",
+              "value": "http://localhost:6507/reporting/viewer"
             }
           ]
         }

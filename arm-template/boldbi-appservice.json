@@ -13,29 +13,6 @@
       "minLength": 3,
       "defaultValue": "boldbistorage"
     },
-    "imageName": {
-      "type": "string",
-      "defaultValue": "us-central1-docker.pkg.dev/boldbi-dev-296107/boldbi/boldbi-docker:16.1.90_07142026_085820_Debian"
-    },
-    "artifactRegistryUrl": {
-      "type": "string",
-      "defaultValue": "https://us-central1-docker.pkg.dev"
-    },
-    "artifactRegistryUsername": {
-      "type": "string",
-      "defaultValue": "_json_key"
-    },
-    "artifactRegistryPassword": {
-      "type": "secureString"
-    },
-    "protocol": {
-      "type": "string",
-      "defaultValue": "https",
-      "allowedValues": [
-        "http",
-        "https"
-      ]
-    },
     "appServicePlanSize": {
       "type": "string",
       "defaultValue": "P1V3_2Core_8GB_DEV",
@@ -44,20 +21,95 @@
         "P2V3_4Core_16GB_PROD",
         "P3V3_8Core_32GB_PROD"
       ]
+    },
+    "unlockKey": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Bold BI unlock/license key"
+      }
+    },
+    "userEmail": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Initial admin user email"
+      }
+    },
+    "userPassword": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Initial admin user password"
+      }
+    },
+    "databaseServerType": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database server type"
+      }
+    },
+    "databaseHost": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database host"
+      }
+    },
+    "databasePort": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database port"
+      }
+    },
+    "databaseUser": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database user"
+      }
+    },
+    "databasePassword": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database password"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database name"
+      }
+    },
+    "postgresMaintenanceDatabase": {
+      "type": "string",
+      "defaultValue": "postgres",
+      "metadata": {
+        "description": "PostgreSQL maintenance database"
+      }
+    },
+    "databaseAdditionalParameters": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Additional connection parameters"
+      }
     }
   },
   "variables": {
     "planName": "[concat(parameters('appServiceName'), '-plan')]",
     "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
-    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
-    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
     "planSkuMap": {
       "P1V3_2Core_8GB_DEV": "P1v3",
       "P2V3_4Core_16GB_PROD": "P2v3",
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]"
+    "dockerImage": "DOCKER|syncfusion/boldbi:latest"
   },
   "resources": [
     {
@@ -110,7 +162,7 @@
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "httpsOnly": "[variables('httpsOnly')]",
+        "httpsOnly": "true",
         "siteConfig": {
           "linuxFxVersion": "[variables('dockerImage')]",
           "alwaysOn": true,
@@ -118,32 +170,16 @@
           "healthCheckEvictionTimeInMin": 2,
           "appSettings": [
             {
-              "name": "DOCKER_REGISTRY_SERVER_URL",
-              "value": "[parameters('artifactRegistryUrl')]"
-            },
-            {
-              "name": "DOCKER_REGISTRY_SERVER_USERNAME",
-              "value": "[parameters('artifactRegistryUsername')]"
-            },
-            {
-              "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
-              "value": "[parameters('artifactRegistryPassword')]"
-            },
-            {
-              "name": "AZURE_APP_SERVICES_HTTPS",
-              "value": "[variables('azureAppServicesHttps')]"
+              "name": "BOLD_SERVICES_REVERSE_PROXY",
+              "value": "true"
             },
             {
               "name": "APP_URL",
-              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+              "value": "[concat('https://', parameters('appServiceName'), '.azurewebsites.net')]"
             },
             {
               "name": "WEBSITES_PORT",
               "value": "80"
-            },
-            {
-              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-              "value": "true"
             },
             {
               "name": "BOLD_SERVICES_AZUREBLOB_ACCESSKEY",
@@ -172,6 +208,50 @@
             {
               "name": "BOLD_SERVICES_CONSOLE_LOG_ENABLED",
               "value": "true"
+            },
+            {
+              "name": "BOLD_SERVICES_UNLOCK_KEY",
+              "value": "[parameters('unlockKey')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_TYPE",
+              "value": "[parameters('databaseServerType')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_HOST",
+              "value": "[parameters('databaseHost')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_PORT",
+              "value": "[parameters('databasePort')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_USER",
+              "value": "[parameters('databaseUser')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_PASSWORD",
+              "value": "[parameters('databasePassword')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_NAME",
+              "value": "[parameters('databaseName')]"
+            },
+            {
+              "name": "BOLD_SERVICES_POSTGRESQL_MAINTENANCE_DB",
+              "value": "[parameters('postgresMaintenanceDatabase')]"
+            },
+            {
+              "name": "BOLD_SERVICES_DB_ADDITIONAL_PARAMETERS",
+              "value": "[parameters('databaseAdditionalParameters')]"
+            },
+            {
+              "name": "BOLD_SERVICES_USER_EMAIL",
+              "value": "[parameters('userEmail')]"
+            },
+            {
+              "name": "BOLD_SERVICES_USER_PASSWORD",
+              "value": "[parameters('userPassword')]"
             }
           ]
         }
