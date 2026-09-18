@@ -163,7 +163,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "DOCKER|asme123/boldbi:16.2.5_new1"
+    "dockerImage": "DOCKER|syncfusion/boldbi:latest"
   },
   "resources": [
     {
@@ -224,7 +224,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
           "healthCheckEvictionTimeInMin": 2,
           "appSettings": [
             {
-              "name": "AZURE_APP_SERVICES_HTTPS",
+              "name": "BOLD_SERVICES_REVERSE_PROXY",
               "value": "true"
             },
             {
