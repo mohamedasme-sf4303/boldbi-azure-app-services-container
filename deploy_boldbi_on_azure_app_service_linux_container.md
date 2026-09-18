@@ -67,18 +67,6 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
       "minLength": 3,
       "defaultValue": "boldbistorage"
     },
-    "imageName": {
-      "type": "string",
-      "defaultValue": "asme123/boldbi:azure_app_services_images4"
-    },
-    "protocol": {
-      "type": "string",
-      "defaultValue": "https",
-      "allowedValues": [
-        "http",
-        "https"
-      ]
-    },
     "appServicePlanSize": {
       "type": "string",
       "defaultValue": "P1V3_2Core_8GB_DEV",
@@ -169,15 +157,13 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
   "variables": {
     "planName": "[concat(parameters('appServiceName'), '-plan')]",
     "workspaceName": "[concat(parameters('appServiceName'), '-logs')]",
-    "httpsOnly": "[equals(parameters('protocol'), 'https')]",
-    "azureAppServicesHttps": "[if(equals(parameters('protocol'), 'https'), 'true', 'false')]",
     "planSkuMap": {
       "P1V3_2Core_8GB_DEV": "P1v3",
       "P2V3_4Core_16GB_PROD": "P2v3",
       "P3V3_8Core_32GB_PROD": "P3v3"
     },
     "skuName": "[variables('planSkuMap')[parameters('appServicePlanSize')]]",
-    "dockerImage": "[concat('DOCKER|', parameters('imageName'))]"
+    "dockerImage": "DOCKER|syncfusion/boldbi:latest"
   },
   "resources": [
     {
@@ -230,7 +216,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
-        "httpsOnly": "[variables('httpsOnly')]",
+        "httpsOnly": "true",
         "siteConfig": {
           "linuxFxVersion": "[variables('dockerImage')]",
           "alwaysOn": true,
@@ -238,12 +224,12 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
           "healthCheckEvictionTimeInMin": 2,
           "appSettings": [
             {
-              "name": "AZURE_APP_SERVICES_HTTPS",
-              "value": "[variables('azureAppServicesHttps')]"
+              "name": "BOLD_SERVICES_REVERSE_PROXY",
+              "value": "true"
             },
             {
               "name": "APP_URL",
-              "value": "[concat(parameters('protocol'), '://', parameters('appServiceName'), '.azurewebsites.net')]"
+              "value": "[concat('https://', parameters('appServiceName'), '.azurewebsites.net')]"
             },
             {
               "name": "WEBSITES_PORT",
@@ -371,6 +357,7 @@ This document provides a step-by-step guide to deploy **Bold BI** on **Azure App
 ```
 
 </details>
+
 ---
 
 ### Step 4: Fill in Deployment Details
@@ -387,8 +374,6 @@ Provide the following parameters:
 | **App Service Name** | Enter a unique name for the Bold BI App URL (3–24 characters, lowercase letters and numbers only). If taken, the deployment fails — choose another. |
 | **App Service Plan Size** | Select the App Service SKU. Available values: <br>• `P1V3_2Core_8GB_DEV` <br>• `P2V3_4Core_16GB_PROD` <br>• `P3V3_8Core_32GB_PROD` |
 | **Storage Account Name** | Unique name (3–24 characters, lowercase letters and numbers only) for Blob storage. |
-| **Protocol** | Choose the protocol used to host Bold BI. <br>• Select `http` if you want to host Bold BI over **HTTP** (e.g., `http://<appname>.azurewebsites.net`). <br>• Select `https` if you want to host Bold BI over **HTTPS** (e.g., `https://<appname>.azurewebsites.net`). <br> Make sure the protocol you select here matches how you will access the application later. |
-| **Image Name** | The Bold BI Docker image to deploy. <br>• **Default value:** `asme123/boldbi:azure_app_services_images4` <br>• If you have any other Bold BI image, update this value here. <br> Example format: `<repository>/<image>:<tag>`. |
 
   ![mandatory](./images/mandatory_value.png)
 
@@ -466,13 +451,6 @@ Provide the following parameters:
   ![default_domain](./images/default_domain.png)
 
 2. Paste the URL into your browser.
-
-> **Note:**
-> - If you chose **HTTP**, access the site via `http://<Default Domain>`.
-> - If you chose **HTTPS**, access the site via `https://<Default Domain>`.
->
-> Wait for some time for it to load completely before proceeding.
-
 ---
 
 ### Step 9: Start the Bold BI Application
@@ -563,4 +541,3 @@ This guide covers the complete workflow to:
 - Install **client libraries** via environment variables.
 - Upgrade the Bold BI Docker image when a new version is available.
 - Troubleshoot common deployment and runtime issues.
-
